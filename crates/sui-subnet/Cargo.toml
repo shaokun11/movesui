@@ -1,0 +1,9 @@
+[package]
+name = "sui-subnet"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+avalanche-types = { version = "0.0.398", features = ["subnet", "codec_base64"] }

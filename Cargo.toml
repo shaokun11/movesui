@@ -65,6 +65,7 @@ exclude = [
 ]
 
 members = [
+    "crates/sui-subnet",
     "crates/anemo-benchmark",
     "crates/mysten-common",
     "crates/mysten-metrics",
