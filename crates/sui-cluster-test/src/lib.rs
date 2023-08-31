@@ -251,9 +251,9 @@ impl TestContext {
                 })
                 .collect::<Vec<_>>(),
         )
-        .await
-        .into_iter()
-        .collect::<Vec<_>>()
+            .await
+            .into_iter()
+            .collect::<Vec<_>>()
     }
 }
 
@@ -298,6 +298,8 @@ pub struct ClusterTest;
 
 impl ClusterTest {
     pub async fn run(options: ClusterTestOpt) {
+        println!("faucet_address {:#?}", options.faucet_address);
+        println!("fullnode_address {:#?}", options.fullnode_address);
         let mut ctx = TestContext::setup(options)
             .await
             .unwrap_or_else(|e| panic!("Failed to set up TestContext, e: {e}"));

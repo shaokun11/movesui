@@ -740,9 +740,10 @@ impl TestClusterBuilder {
             ws: Some(fullnode_handle.ws_url.clone()),
         });
         wallet_conf.active_env = Some("localnet".to_string());
-
+        let cnf = working_dir.join(SUI_CLIENT_CONFIG);
+        println!("-wallet_conf {}",cnf.to_str().unwrap());
         wallet_conf
-            .persisted(&working_dir.join(SUI_CLIENT_CONFIG))
+            .persisted(&cnf)
             .save()
             .unwrap();
 
