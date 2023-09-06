@@ -50,7 +50,7 @@ use sui_types::transaction::{Transaction, TransactionData};
 use tokio::time::{timeout, Instant};
 use tokio::{task::JoinHandle, time::sleep};
 use tracing::info;
-const NUM_VALIDATOR: usize = 4;
+const NUM_VALIDATOR: usize = 2;
 
 pub struct FullNodeHandle {
     pub sui_node: SuiNodeHandle,

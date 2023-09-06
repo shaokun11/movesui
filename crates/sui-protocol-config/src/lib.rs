@@ -808,7 +808,8 @@ impl ProtocolConfig {
     }
 
     pub fn zklogin_auth(&self) -> bool {
-        self.feature_flags.zklogin_auth
+        // self.feature_flags.zklogin_auth
+        false
     }
 
     pub fn consensus_transaction_ordering(&self) -> ConsensusTransactionOrdering {
