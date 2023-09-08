@@ -725,7 +725,6 @@ impl TestClusterBuilder {
     pub async fn build(mut self) -> TestCluster {
         let swarm = self.start_swarm().await.unwrap();
         let working_dir = swarm.dir();
-
         let mut wallet_conf: SuiClientConfig =
             PersistedConfig::read(&working_dir.join(SUI_CLIENT_CONFIG)).unwrap();
 
@@ -799,7 +798,7 @@ impl TestClusterBuilder {
         swarm.launch().await?;
 
         let dir = swarm.dir();
-
+        println!("-----------swarm.dir----------{}-----------",dir.to_string_lossy());
         let network_path = dir.join(SUI_NETWORK_CONFIG);
         let wallet_path = dir.join(SUI_CLIENT_CONFIG);
         let keystore_path = dir.join(SUI_KEYSTORE_FILENAME);

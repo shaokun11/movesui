@@ -180,12 +180,14 @@ impl Parameters {
         1_000
     }
 
+    /// make this to unreachable to block on proposal block header
     fn default_max_header_delay() -> Duration {
-        Duration::from_secs(2)
+        Duration::from_secs(60_000_000_000)
     }
 
+    /// make this to unreachable to block on proposal block header
     fn default_min_header_delay() -> Duration {
-        Duration::from_secs_f64(0.5)
+        Duration::from_secs_f64(6_000_000_000.0)
     }
 
     fn default_gc_depth() -> u64 {

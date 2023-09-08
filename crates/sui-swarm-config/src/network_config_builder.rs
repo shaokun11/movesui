@@ -109,6 +109,11 @@ impl<R> ConfigBuilder<R> {
         self
     }
 
+    pub fn with_config_directory(mut self, config_directory_: PathBuf) -> Self {
+        self.config_directory = config_directory_;
+        self
+    }
+
     pub fn with_accounts(mut self, accounts: Vec<AccountConfig>) -> Self {
         self.get_or_init_genesis_config().accounts = accounts;
         self
@@ -276,7 +281,7 @@ impl<R: rand::RngCore + rand::CryptoRng> ConfigBuilder<R> {
             .enumerate()
             .map(|(idx, validator)| {
                 let mut builder = ValidatorConfigBuilder::new()
-                    .with_config_directory(self.config_directory.clone());
+                    .with_config_directory(self.config_directory.clone().join(idx.to_string()));
                 if let Some(spvc) = &self.supported_protocol_versions_config {
                     let supported_versions = match spvc {
                         ProtocolVersionsConfig::Default => {

@@ -51,6 +51,7 @@ impl Node {
 
     /// Start this Node
     pub async fn spawn(&self) -> Result<()> {
+        println!("-----------spawn node config config---{}----",self.config.db_path.to_string_lossy());
         info!(name =% self.name().concise(), "starting in-memory node");
         *self.container.lock().unwrap() =
             Some(Container::spawn(self.config.clone(), self.runtime_type).await);

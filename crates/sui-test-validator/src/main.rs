@@ -10,6 +10,7 @@ use axum::{
 use clap::Parser;
 use http::{Method, StatusCode};
 use std::{net::SocketAddr, sync::Arc};
+use std::path::PathBuf;
 use sui_cluster_test::{
     cluster::{Cluster, LocalNewCluster},
     config::{ClusterTestOpt, Env},
@@ -71,7 +72,7 @@ async fn main() -> Result<()> {
 
     let args = Args::parse();
     let Args {
-        config_dir,
+       mut config_dir,
         fullnode_rpc_port,
         indexer_rpc_port,
         pg_port,
@@ -81,7 +82,7 @@ async fn main() -> Result<()> {
         with_indexer,
         use_indexer_experimental_methods,
     } = args;
-
+    config_dir = Some(PathBuf::from("/home/ubuntu/sui-config-path"));
     // We don't pass epoch duration if we have a genesis config.
     let epoch_duration_ms = if config_dir.is_some() {
         None

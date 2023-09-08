@@ -131,7 +131,7 @@ impl<R> SwarmBuilder<R> {
         self
     }
 
-    pub fn with_objects<I: IntoIterator<Item = Object>>(mut self, objects: I) -> Self {
+    pub fn with_objects<I: IntoIterator<Item=Object>>(mut self, objects: I) -> Self {
         self.additional_objects.extend(objects);
         self
     }
@@ -215,7 +215,6 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
         } else {
             SwarmDirectory::Temporary(TempDir::new().unwrap())
         };
-
         let network_config = self.network_config.unwrap_or_else(|| {
             let mut config_builder = ConfigBuilder::new(dir.as_ref());
 
@@ -230,6 +229,7 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
 
             config_builder
                 .committee(self.committee)
+                .with_config_directory(dir.join("validator_db"))
                 .rng(self.rng)
                 .with_objects(self.additional_objects)
                 .with_supported_protocol_versions_config(
@@ -246,6 +246,7 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
 
         let mut fullnode_config_builder = FullnodeConfigBuilder::new()
             .with_config_directory(dir.as_ref().into())
+            .with_db_path(dir.join("full_node_db"))
             .with_db_checkpoint_config(self.db_checkpoint_config.clone());
         if let Some(spvc) = &self.fullnode_supported_protocol_versions_config {
             let supported_versions = match spvc {
@@ -271,6 +272,7 @@ impl<R: rand::RngCore + rand::CryptoRng> SwarmBuilder<R> {
                     }
                 }
                 let config = builder.build(&mut OsRng, &network_config);
+                println!("----fullnode db path is {:?}------", config.clone().db_path);
                 nodes.insert(config.protocol_public_key(), Node::new(config));
             });
         }
@@ -300,7 +302,7 @@ impl Drop for Swarm {
 }
 
 impl Swarm {
-    fn nodes_iter_mut(&mut self) -> impl Iterator<Item = &mut Node> {
+    fn nodes_iter_mut(&mut self) -> impl Iterator<Item=&mut Node> {
         self.nodes.values_mut()
     }
 
@@ -338,7 +340,7 @@ impl Swarm {
         &mut self.network_config
     }
 
-    pub fn all_nodes(&self) -> impl Iterator<Item = &Node> {
+    pub fn all_nodes(&self) -> impl Iterator<Item=&Node> {
         self.nodes.values()
     }
 
@@ -353,7 +355,7 @@ impl Swarm {
     /// Return an iterator over shared references of all nodes that are set up as validators.
     /// This means that they have a consensus config. This however doesn't mean this validator is
     /// currently active (i.e. it's not necessarily in the validator set at the moment).
-    pub fn validator_nodes(&self) -> impl Iterator<Item = &Node> {
+    pub fn validator_nodes(&self) -> impl Iterator<Item=&Node> {
         self.nodes
             .values()
             .filter(|node| node.config.consensus_config.is_some())
@@ -366,7 +368,7 @@ impl Swarm {
     }
 
     /// Returns an iterator over all currently active validators.
-    pub fn active_validators(&self) -> impl Iterator<Item = &Node> {
+    pub fn active_validators(&self) -> impl Iterator<Item=&Node> {
         self.validator_nodes().filter(|node| {
             node.get_node_handle().map_or(false, |handle| {
                 let state = handle.state();
@@ -376,7 +378,7 @@ impl Swarm {
     }
 
     /// Return an iterator over shared references of all Fullnodes.
-    pub fn fullnodes(&self) -> impl Iterator<Item = &Node> {
+    pub fn fullnodes(&self) -> impl Iterator<Item=&Node> {
         self.nodes
             .values()
             .filter(|node| node.config.consensus_config.is_none())

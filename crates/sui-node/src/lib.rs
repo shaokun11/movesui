@@ -197,6 +197,7 @@ impl SuiNode {
     }
 
     fn start_jwk_updater(epoch_store: Arc<AuthorityPerEpochStore>) {
+        return;
         let epoch = epoch_store.epoch();
         tokio::task::spawn(
             async move {
