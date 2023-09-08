@@ -1,4 +1,5 @@
 use std::{collections::HashMap, fs, io::{self, Error, ErrorKind}, sync::Arc};
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::time::{Duration};
@@ -6,6 +7,7 @@ use avalanche_types::{
     choices, ids,
     subnet::{self, rpc::snow},
 };
+use anyhow::Result;
 use avalanche_types::subnet::rpc::database::manager::{DatabaseManager, Manager};
 use avalanche_types::subnet::rpc::health::Checkable;
 use avalanche_types::subnet::rpc::snow::engine::common::appsender::AppSender;
@@ -32,6 +34,16 @@ use crate::api::static_handlers::{StaticHandler, StaticService};
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const MOVE_DB_DIR: &str = ".move-chain-data";
 
+use sui_faucet::{FaucetRequest, FixedAmountRequest};
+use tower::ServiceBuilder;
+use tower_http::cors::{Any, CorsLayer};
+use sui_cluster_test::faucet::{FaucetClient, FaucetClientFactory};
+use axum::{
+    response::IntoResponse,
+    routing::{get, post},
+    Extension, Json, Router,
+};
+use http::{Method, StatusCode};
 
 /// Represents VM-specific states.
 /// Defined in a separate struct, for interior mutability in [`Vm`](Vm).
@@ -154,13 +166,66 @@ impl Vm {
             faucet_address: None,
             epoch_duration_ms: None,
             use_indexer_experimental_methods: false,
-            config_dir: Some(PathBuf::from("/tmp/.suiconfig")),
+            config_dir: Some(PathBuf::from("/home/ubuntu/sui-config-path")),
         })
             .await.unwrap();
         println!("Fullnode RPC URL: {}", cluster.fullnode_url());
-        // start_faucet(&cluster, 9123).await?;
+        start_faucet(&cluster, 9123).await.unwrap();
     }
 }
+struct AppState2 {
+    faucet: Arc<dyn FaucetClient + Sync + Send>,
+}
+
+async fn faucet_request(
+    Extension(state): Extension<Arc<AppState2>>,
+    Json(payload): Json<FaucetRequest>,
+) -> impl IntoResponse {
+    let result = match payload {
+        FaucetRequest::FixedAmountRequest(FixedAmountRequest { recipient }) => {
+            state.faucet.request_sui_coins(recipient).await
+        }
+        FaucetRequest::GetBatchSendStatusRequest(_) => todo!(),
+    };
+
+    if !result.transferred_gas_objects.is_empty() {
+        (StatusCode::CREATED, Json(result))
+    } else {
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(result))
+    }
+}
+
+async fn start_faucet(cluster: &LocalNewCluster, port: u16) -> Result<()> {
+
+    let faucet = FaucetClientFactory::new_from_cluster(cluster).await;
+
+    let app_state = Arc::new(AppState2 { faucet });
+
+    let cors = CorsLayer::new()
+        .allow_methods(vec![Method::GET, Method::POST])
+        .allow_headers(Any)
+        .allow_origin(Any);
+
+    let app = Router::new()
+        .route("/gas", post(faucet_request))
+        .layer(
+            ServiceBuilder::new()
+                .layer(cors)
+                .layer(Extension(app_state))
+                .into_inner(),
+        );
+
+    let addr = SocketAddr::from(([127, 0, 0, 1], port));
+
+    println!("Faucet URL: http://{}", addr);
+
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await?;
+
+    Ok(())
+}
+
 
 #[tonic::async_trait]
 impl BatchedChainVm for Vm {
@@ -410,7 +475,6 @@ impl CommonVm for Vm
             verified_blocks: Arc::new(RwLock::new(HashMap::new())),
             vm: None,
         };
-
         let mut vm_state = self.state.write().await;
         let genesis = "hello world";
         let has_last_accepted = state.has_last_accepted_block().await?;
